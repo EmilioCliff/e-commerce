@@ -1,0 +1,99 @@
+Project Ecommerce {
+  database_type: 'PostgreSQL'
+  Note: '''
+    # Ecommerce Database
+    **Documentation on the Database Schema**
+  '''
+}
+
+Table users {
+  id bigserial [pk]
+  username varchar [not null]
+  email varchar [not null, unique]
+  password varchar [not null]
+  subscription bool [default: false]
+  token varchar [not null]
+  refresh_token varchar [not null]
+  user_cart integer[] [note: 'list of product id in the cart']
+  role varchar [not null, note: "user or admin"]
+  created_at timestamptz [default: `now()`]
+  updated_at timestamptz [default: `now()`]
+
+  indexes {
+    email
+    subscription [note: "sending blogs"]
+  }
+}
+
+Table products {
+  id bigserial [pk]
+  product_name varchar [not null, unique]
+  description text [not null]
+  price float [not null]
+  quantity integer [default: 0]
+  discount float [note: "admins may have discount. Float of percentage ie 14.5"]
+  rating integer [note: "calculate when reviews is created. 1-5"]
+  size_options integer[]
+  color_options varchar[]
+  category varchar [not null]
+  brand varchar
+  image_url varchar[] [note: "list of file paths to the product images"]
+  created_at timestamptz [default: `now()`]
+  updated_at timestamptz [default: `now()`]
+
+  indexes {
+    product_name
+    price
+    category
+    brand
+    (category, brand)
+  }
+}
+
+Table orders {
+  id bigserial [pk]
+  user_id bigint [ref: > users.id]
+  amount bigfloat [not null]
+  status varchar [default: 'pending']
+  shipping_address varchar [not null]
+  created_at timestamptz [default: `now()`]
+
+  indexes {
+    user_id
+    status [note: "to find pending,delivering,delivered"]
+  }
+}
+
+Table order_items {
+  id bigserial [pk]
+  order_id bigint [ref: > orders.id]
+  product_id bigint [ref: > products.id]
+  color varchar
+  size varchar
+  quantity integer [not null]
+
+  indexes {
+    order_id
+    product_id [note: "to find most sold items/popularity"]
+  }
+}
+
+Table reviews {
+  id bigserial [pk]
+  user_id bigint [ref: > users.id]
+  product_id bigint [ref: > products.id]
+  rating integer [not null]
+  review text [not null]
+
+  indexes {
+    product_id
+  }
+}
+
+Table blogs {
+  id bigserial [pk]
+  author bigint [ref: > users.id]
+  title varchar [not null]
+  content text [not null]
+  created_at timestamptz [default: `now()`]
+}
