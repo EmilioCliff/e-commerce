@@ -21,7 +21,7 @@ WHERE author = $1;
 
 -- name: ListBlogs :many
 SELECT * FROM blogs
-ORDER BY title;
+ORDER BY created_at;
 
 -- name: EditBlog :one
 UPDATE blogs

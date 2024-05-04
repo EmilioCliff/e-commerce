@@ -18,7 +18,7 @@ WHERE category = $1;
 SELECT * FROM products
 ORDER BY updated_at DESC;
 
--- GetProduct :one
+-- name: GetProduct :one
 SELECT * FROM products
 WHERE id = $1
 LIMIT 1;

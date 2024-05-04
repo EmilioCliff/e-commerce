@@ -10,7 +10,7 @@ import (
 
 type Blog struct {
 	ID        int64     `json:"id"`
-	Author    int32     `json:"author"`
+	Author    int64     `json:"author"`
 	Title     string    `json:"title"`
 	Content   string    `json:"content"`
 	CreatedAt time.Time `json:"created_at"`
@@ -44,7 +44,7 @@ type Product struct {
 	Discount *float64 `json:"discount"`
 	// calculate when reviews is created. 1-5
 	Rating       *int32   `json:"rating"`
-	SizeOptions  []int32  `json:"size_options"`
+	SizeOptions  []string `json:"size_options"`
 	ColorOptions []string `json:"color_options"`
 	Category     string   `json:"category"`
 	Brand        *string  `json:"brand"`

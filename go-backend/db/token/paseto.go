@@ -10,7 +10,7 @@ import (
 )
 
 type Maker interface {
-	CreateToken(username string, duration time.Duration, admin bool) (string, error)
+	CreateToken(user_id int64, duration time.Duration, admin bool) (string, error)
 	VerifyToken(token string) (*Payload, string, error)
 }
 
@@ -19,6 +19,7 @@ type PasetoMaker struct {
 	Paseto          *paseto.V2 `json:"paseto"`
 }
 
+// Return a PasetoMaker that has all the methods of the Maker interface
 func NewPasetoMaker(symmetrical_key string) (Maker, error) {
 	if len(symmetrical_key) != chacha20poly1305.KeySize {
 		return nil, errors.New("symmetrical key is not the key_size for the chacha20poly1305")
@@ -30,8 +31,9 @@ func NewPasetoMaker(symmetrical_key string) (Maker, error) {
 	}, nil
 }
 
-func (maker *PasetoMaker) CreateToken(username string, duration time.Duration, admin bool) (string, error) {
-	payload, err := NewPayload(username, duration, admin)
+// Generates a new token
+func (maker *PasetoMaker) CreateToken(user_id int64, duration time.Duration, admin bool) (string, error) {
+	payload, err := NewPayload(user_id, duration, admin)
 	if err != nil {
 		return "", fmt.Errorf("failed to token payload")
 	}
@@ -39,6 +41,7 @@ func (maker *PasetoMaker) CreateToken(username string, duration time.Duration, a
 	return maker.Paseto.Encrypt(maker.Symmetrical_key, payload, Footer)
 }
 
+// Decrypts a token and verifys its validity
 func (maker *PasetoMaker) VerifyToken(token string) (*Payload, string, error) {
 	var payload Payload
 	var footer string

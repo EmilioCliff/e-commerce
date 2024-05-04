@@ -1,8 +1,8 @@
 -- name: CreateOrder :one
 INSERT INTO orders (
-    user_id, amount, status, shipping_address, created_at
+    user_id, amount, shipping_address, created_at
 ) VALUES (
-    $1, $2, $3, $4, $5
+    $1, $2, $3, $4
 )
 RETURNING *;
 

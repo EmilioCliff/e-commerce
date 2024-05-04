@@ -53,6 +53,33 @@ func (q *Queries) DeleteReview(ctx context.Context, id int64) error {
 	return err
 }
 
+const editReview = `-- name: EditReview :one
+UPDATE reviews
+    set rating = $1,
+    review = $2
+WHERE id = $3
+RETURNING id, user_id, product_id, rating, review
+`
+
+type EditReviewParams struct {
+	Rating int32  `json:"rating"`
+	Review string `json:"review"`
+	ID     int64  `json:"id"`
+}
+
+func (q *Queries) EditReview(ctx context.Context, arg EditReviewParams) (Review, error) {
+	row := q.db.QueryRow(ctx, editReview, arg.Rating, arg.Review, arg.ID)
+	var i Review
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.ProductID,
+		&i.Rating,
+		&i.Review,
+	)
+	return i, err
+}
+
 const getProductReviews = `-- name: GetProductReviews :many
 SELECT id, user_id, product_id, rating, review FROM reviews
 WHERE product_id = $1
@@ -82,6 +109,24 @@ func (q *Queries) GetProductReviews(ctx context.Context, productID int64) ([]Rev
 		return nil, err
 	}
 	return items, nil
+}
+
+const getReview = `-- name: GetReview :one
+SELECT id, user_id, product_id, rating, review FROM reviews
+WHERE id = $1 LIMIT 1
+`
+
+func (q *Queries) GetReview(ctx context.Context, id int64) (Review, error) {
+	row := q.db.QueryRow(ctx, getReview, id)
+	var i Review
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.ProductID,
+		&i.Rating,
+		&i.Review,
+	)
+	return i, err
 }
 
 const getUsersReviews = `-- name: GetUsersReviews :many

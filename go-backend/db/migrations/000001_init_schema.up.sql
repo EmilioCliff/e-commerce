@@ -20,7 +20,7 @@ CREATE TABLE "products" (
   "quantity" bigint NOT NULL DEFAULT 0,
   "discount" float,
   "rating" integer,
-  "size_options" integer[],
+  "size_options" varchar[],
   "color_options" varchar[],
   "category" varchar NOT NULL,
   "brand" varchar,
@@ -62,7 +62,7 @@ CREATE TABLE "reviews" (
 
 CREATE TABLE "blogs" (
   "id" bigserial PRIMARY KEY,
-  "author" integer NOT NULL,
+  "author" bigint NOT NULL,
   "title" varchar NOT NULL,
   "content" text NOT NULL,
   "created_at" timestamptz NOT NULL DEFAULT (now()),

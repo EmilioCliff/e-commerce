@@ -1,12 +1,19 @@
 package utils
 
+import (
+	"bytes"
+	"fmt"
+
+	"github.com/jordan-wright/email"
+)
+
 const (
 	smtpAuthAddress = "smtp.gmail.com"
 	smtpAuthServer  = "smtp.gmail.com:587"
 )
 
 type EmailSender interface {
-	SendEmail(title string, content string, to []string, cc []string, bcc []string, attachFiles []string) error
+	SendEmail(title string, content string, mimeType string, to []string, cc []string, bcc []string, attachFiles []string, attachmentData [][]byte) error
 }
 
 type GmailSender struct {
@@ -23,6 +30,18 @@ func NewGmailSender(name, email_address, email_password string) EmailSender {
 	}
 }
 
-func (sender *GmailSender) SendEmail(title string, content string, to []string, cc []string, bcc []string, attachFiles []string) error {
+func (sender *GmailSender) SendEmail(title string, content string, mimeType string, to []string, cc []string, bcc []string, attachFiles []string, attachmentData [][]byte) error {
+	e := email.NewEmail()
+	e.From = fmt.Sprintf("%s <%s>", sender.name, sender.from_email_address)
+	e.To = to
+	e.Cc = cc
+	e.Bcc = bcc
+	e.HTML = []byte(content)
+
+	for i, f := range attachmentData {
+		attachReader := bytes.NewReader(f)
+		e.Attach(attachReader, attachFiles[i], mimeType)
+	}
+
 	return nil
 }

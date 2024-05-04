@@ -17,10 +17,10 @@ type RedisTaskProcessor interface {
 type TaskProcessor struct {
 	server *asynq.Server
 	maker  token.Maker
-	store  db.Store
+	store  *db.Store
 }
 
-func NewTaskProcessor(redisOpts asynq.RedisClientOpt, store db.Store) RedisTaskProcessor {
+func NewTaskProcessor(redisOpts asynq.RedisClientOpt, store *db.Store) RedisTaskProcessor {
 	server := asynq.NewServer(redisOpts, asynq.Config{
 		Queues: map[string]int{
 			"critical": 6,

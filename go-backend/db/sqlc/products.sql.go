@@ -49,6 +49,34 @@ func (q *Queries) GetAllProducts(ctx context.Context) ([]Product, error) {
 	return items, nil
 }
 
+const getProduct = `-- name: GetProduct :one
+SELECT id, product_name, description, price, quantity, discount, rating, size_options, color_options, category, brand, image_url, created_at, updated_at FROM products
+WHERE id = $1
+LIMIT 1
+`
+
+func (q *Queries) GetProduct(ctx context.Context, id int64) (Product, error) {
+	row := q.db.QueryRow(ctx, getProduct, id)
+	var i Product
+	err := row.Scan(
+		&i.ID,
+		&i.ProductName,
+		&i.Description,
+		&i.Price,
+		&i.Quantity,
+		&i.Discount,
+		&i.Rating,
+		&i.SizeOptions,
+		&i.ColorOptions,
+		&i.Category,
+		&i.Brand,
+		&i.ImageUrl,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getProductByCategory = `-- name: GetProductByCategory :many
 SELECT id, product_name, description, price, quantity, discount, rating, size_options, color_options, category, brand, image_url, created_at, updated_at FROM products
 WHERE category = $1
