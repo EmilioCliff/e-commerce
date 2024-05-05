@@ -1,1 +1,1 @@
-package token
+package token_test

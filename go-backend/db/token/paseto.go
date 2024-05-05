@@ -61,5 +61,10 @@ func (maker *PasetoMaker) VerifyToken(token string) (*Payload, string, error) {
 		return nil, "", fmt.Errorf("error decrypting the token")
 	}
 
+	err = Valid(&payload)
+	if err != nil {
+		return &payload, footer, err
+	}
+
 	return &payload, footer, err
 }

@@ -52,11 +52,11 @@ func (server *Server) newOrderResponse(order db.Order, ctx *gin.Context) (respon
 }
 
 type createOrderRequestUri struct {
-	Id int64 `uri:"id" binding:"required"`
+	ID int64 `uri:"id" binding:"required"`
 }
 
 type createOrderRequestQuery struct {
-	ProductIds      []int64  `json:"product_ids" binding:"required"`
+	ProductIDs      []int64  `json:"product_ids" binding:"required"`
 	Quantity        []int32  `json:"quantities" binding:"required"`
 	Colors          []string `json:"colors"`
 	Size            []string `json:"size"`
@@ -75,8 +75,8 @@ func (server *Server) createOrder(ctx *gin.Context) {
 	}
 
 	var amount float64
-	for idx, productId := range req.ProductIds {
-		product, err := server.store.GetProduct(ctx, productId)
+	for idx, productID := range req.ProductIDs {
+		product, err := server.store.GetProduct(ctx, productID)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				ctx.JSON(http.StatusNotFound, errorResponse(err))
@@ -95,14 +95,14 @@ func (server *Server) createOrder(ctx *gin.Context) {
 		amount += product.Price * float64(req.Quantity[idx])
 
 	}
-	// ACHIEVE THESE THROUGH A TRANSACTION
+	// ACHIEVE THESE THROUGH A TRANSACTION if it fails both the order and items created are reverted
 	// TODO: calculate the total shipping fee then distribute task to asynq to send_stk_push then processit and create a transactions
-	//		 wait for the mpesa callback url then process it and update the transactions if successful
+	//		 wait for the mpesa callback url then process it and update the transactions if successful if not do nothing
 	//		 create the order and its order_items then empty the cart list.
 	//       Send receipt order to user if successfull transactions.
 
 	order, err := server.store.CreateOrder(ctx, db.CreateOrderParams{
-		UserID:          uri.Id,
+		UserID:          uri.ID,
 		Amount:          amount,
 		ShippingAddress: req.ShippingAddress,
 	})
@@ -111,10 +111,10 @@ func (server *Server) createOrder(ctx *gin.Context) {
 		return
 	}
 
-	for idx, productId := range req.ProductIds {
+	for idx, productID := range req.ProductIDs {
 		_, err := server.store.CreateOrderItem(ctx, db.CreateOrderItemParams{
 			OrderID:   order.ID,
-			ProductID: productId,
+			ProductID: productID,
 			Quantity:  req.Quantity[idx],
 			Color:     &req.Colors[idx],
 			Size:      &req.Size[idx],
@@ -136,7 +136,7 @@ func (server *Server) createOrder(ctx *gin.Context) {
 }
 
 type getOrderRequest struct {
-	Id int64 `uri:"id" binding:"required"`
+	ID int64 `uri:"id" binding:"required"`
 }
 
 func (server *Server) getOrder(ctx *gin.Context) {
@@ -146,7 +146,7 @@ func (server *Server) getOrder(ctx *gin.Context) {
 		return
 	}
 
-	order, err := server.store.GetOrder(ctx, req.Id)
+	order, err := server.store.GetOrder(ctx, req.ID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			ctx.JSON(http.StatusNotFound, errorResponse(err))
@@ -159,7 +159,7 @@ func (server *Server) getOrder(ctx *gin.Context) {
 	payload := ctx.MustGet(PayloadKey)
 	payloadAssert := payload.(token.Payload)
 	if !payloadAssert.IsAdmin && payloadAssert.UserID == order.UserID {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"unathorized": "user unauthorized to view another user order"})
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "user unauthorized to view another user order"})
 		return
 	}
 
@@ -176,7 +176,7 @@ func (server *Server) listOrders(ctx *gin.Context) {
 	payload := ctx.MustGet(PayloadKey)
 	payloadAssert := payload.(token.Payload)
 	if !payloadAssert.IsAdmin {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"orders": "user cannot list all orders"})
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "user cannot list all orders"})
 		return
 	}
 
@@ -202,7 +202,7 @@ func (server *Server) listOrders(ctx *gin.Context) {
 }
 
 type listUsersOrdersRequest struct {
-	Id int64 `uri:"id" binding:"required"`
+	ID int64 `uri:"id" binding:"required"`
 }
 
 func (server *Server) listUsersOrders(ctx *gin.Context) {
@@ -214,12 +214,12 @@ func (server *Server) listUsersOrders(ctx *gin.Context) {
 
 	payload := ctx.MustGet(PayloadKey)
 	payloadAssert := payload.(token.Payload)
-	if !payloadAssert.IsAdmin && payloadAssert.UserID != req.Id {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"unauthorized": "user can not view another users orders"})
+	if !payloadAssert.IsAdmin && payloadAssert.UserID != req.ID {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "user can not view another users orders"})
 		return
 	}
 
-	orders, err := server.store.GetUserOrders(ctx, req.Id)
+	orders, err := server.store.GetUserOrders(ctx, req.ID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			ctx.JSON(http.StatusNotFound, errorResponse(err))
@@ -245,7 +245,7 @@ func (server *Server) listUsersOrders(ctx *gin.Context) {
 }
 
 type adminChangeOrderStatusRequestUri struct {
-	Id int64 `uri:"id" binding:"required"`
+	ID int64 `uri:"id" binding:"required"`
 }
 
 // Implement the oneof where the status can be pending, inprocess and delivered
@@ -261,7 +261,7 @@ func (server *Server) adminChangeOrderStatus(ctx *gin.Context) {
 	}
 
 	var req adminChangeOrderStatusRequestQuery
-	if err := ctx.ShouldBindQuery(&req); err != nil {
+	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
@@ -269,11 +269,11 @@ func (server *Server) adminChangeOrderStatus(ctx *gin.Context) {
 	payload := ctx.MustGet(PayloadKey)
 	payloadAssert := payload.(token.Payload)
 	if !payloadAssert.IsAdmin {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"unauthorized": "user can not update an order status"})
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "user can not update an order status"})
 		return
 	}
 
-	order, err := server.store.GetOrderForUpdate(ctx, uri.Id)
+	order, err := server.store.GetOrderForUpdate(ctx, uri.ID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			ctx.JSON(http.StatusNotFound, errorResponse(err))

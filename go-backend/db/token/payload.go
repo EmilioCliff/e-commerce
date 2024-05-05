@@ -11,7 +11,7 @@ import (
 var ErrTokenExpired = errors.New("token has expired")
 
 const (
-	Footer = "E-commerce Website"
+	Footer = "E-commerceWebsite"
 )
 
 type Payload struct {

@@ -11,6 +11,7 @@ type Config struct {
 	DBDriver             string        `mapstructure:"DB_DRIVER"`
 	AccessTokenDuration  time.Duration `mapstructure:"ACCESS_TOKEN_DURATION"`
 	RefreshTokenDuration time.Duration `mapstructure:"REFRESH_TOKEN_DURATION"`
+	TokenFooter          string        `mapstructure:"TOKEN_FOOTER"`
 }
 
 // Reads config files and loads it into the Config Struct

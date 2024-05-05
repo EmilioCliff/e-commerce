@@ -2,6 +2,7 @@ package api
 
 import (
 	"database/sql"
+	"fmt"
 	"net/http"
 
 	db "github.com/EmilioCliff/e-commerce/db/sqlc"
@@ -59,7 +60,7 @@ func (server *Server) newOrderItemResponse(orderItem db.OrderItem, ctx *gin.Cont
 }
 
 type getOrderItemRequestUri struct {
-	Id int64 `uri:"id" binding:"required"`
+	ID int64 `uri:"id" binding:"required"`
 }
 
 func (server *Server) getOrderItem(ctx *gin.Context) {
@@ -69,7 +70,7 @@ func (server *Server) getOrderItem(ctx *gin.Context) {
 		return
 	}
 
-	orderItem, err := server.store.GetOrderItem(ctx, uri.Id)
+	orderItem, err := server.store.GetOrderItem(ctx, uri.ID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			ctx.JSON(http.StatusNotFound, errorResponse(err))
@@ -89,7 +90,7 @@ func (server *Server) getOrderItem(ctx *gin.Context) {
 }
 
 type getOrderItemsOfAnOrderRequest struct {
-	Id int64 `uri:"id" binding:"required"`
+	ID int64 `uri:"id" binding:"required"`
 }
 
 func (server *Server) getOrderItemsOfAnOrder(ctx *gin.Context) {
@@ -99,7 +100,7 @@ func (server *Server) getOrderItemsOfAnOrder(ctx *gin.Context) {
 		return
 	}
 
-	order, err := server.store.GetOrder(ctx, uri.Id)
+	order, err := server.store.GetOrder(ctx, uri.ID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			ctx.JSON(http.StatusNotFound, errorResponse(err))
@@ -112,11 +113,12 @@ func (server *Server) getOrderItemsOfAnOrder(ctx *gin.Context) {
 	payload := ctx.MustGet(PayloadKey)
 	payloadAssert := payload.(token.Payload)
 	if !payloadAssert.IsAdmin && payloadAssert.UserID == order.UserID {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"unathorized": "user unauthorized to view another user orderItems"})
+		err := fmt.Errorf("user unauthorized to view another user orderItems")
+		ctx.JSON(http.StatusUnauthorized, err)
 		return
 	}
 
-	orderItems, err := server.store.GetOrderOrderItems(ctx, uri.Id)
+	orderItems, err := server.store.GetOrderOrderItems(ctx, uri.ID)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
@@ -153,7 +155,8 @@ func (server *Server) listOrderItems(ctx *gin.Context) {
 		}
 
 		if _, ok := rsp[orderItem.OrderID]; !ok {
-			rsp[orderItem.OrderID] = make([]responseOrderItem, len(orderItems))
+			// rsp[orderItem.OrderID] = make([]responseOrderItem, len(orderItems))
+			rsp[orderItem.OrderID] = []responseOrderItem{}
 		}
 
 		rsp[orderItem.OrderID] = append(rsp[orderItem.OrderID], structuredOrderItem)

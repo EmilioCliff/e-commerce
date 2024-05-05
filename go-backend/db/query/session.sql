@@ -1,12 +1,12 @@
 -- name: GetSession :one
 SELECT * FROM sessions
-WHERE user_id = $1 LIMIT ONE;
+WHERE id = $1 LIMIT 1;
 
 -- name: CreateSession :one
 INSERT INTO sessions (
-    user_id, refresh_token, is_blocked, user_agent, user_ip, expires_at
+    id, user_id, refresh_token, is_blocked, user_agent, user_ip, expires_at
 ) VALUES (
-    $1, $2, $3, $4, $5, $6
+    $1, $2, $3, $4, $5, $6, $7
 )
 RETURNING *;
 
@@ -16,4 +16,10 @@ UPDATE sessions
     expires_at = $2,
     is_blocked = $3
 WHERE user_id = $4
+RETURNING *;
+
+-- name: BlockSession :one
+UPDATE sessions 
+    set is_blocked = $1
+WHERE id = $2
 RETURNING *;

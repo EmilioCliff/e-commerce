@@ -7,7 +7,7 @@ package db
 import (
 	"time"
 
-	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/google/uuid"
 )
 
 type Blog struct {
@@ -65,14 +65,14 @@ type Review struct {
 }
 
 type Session struct {
-	ID           pgtype.UUID `json:"id"`
-	UserID       int64       `json:"user_id"`
-	RefreshToken string      `json:"refresh_token"`
-	IsBlocked    bool        `json:"is_blocked"`
-	UserAgent    string      `json:"user_agent"`
-	UserIp       string      `json:"user_ip"`
-	ExpiresAt    time.Time   `json:"expires_at"`
-	CreatedAt    time.Time   `json:"created_at"`
+	ID           uuid.UUID `json:"id"`
+	UserID       int64     `json:"user_id"`
+	RefreshToken string    `json:"refresh_token"`
+	IsBlocked    bool      `json:"is_blocked"`
+	UserAgent    string    `json:"user_agent"`
+	UserIp       string    `json:"user_ip"`
+	ExpiresAt    time.Time `json:"expires_at"`
+	CreatedAt    time.Time `json:"created_at"`
 }
 
 type User struct {

@@ -6,9 +6,12 @@ package db
 
 import (
 	"context"
+
+	"github.com/google/uuid"
 )
 
 type Querier interface {
+	BlockSession(ctx context.Context, arg BlockSessionParams) (Session, error)
 	CreateBlog(ctx context.Context, arg CreateBlogParams) (Blog, error)
 	CreateOrder(ctx context.Context, arg CreateOrderParams) (Order, error)
 	CreateOrderItem(ctx context.Context, arg CreateOrderItemParams) (OrderItem, error)
@@ -35,7 +38,7 @@ type Querier interface {
 	GetProductByUpdatedTime(ctx context.Context) ([]Product, error)
 	GetProductReviews(ctx context.Context, productID int64) ([]Review, error)
 	GetReview(ctx context.Context, id int64) (Review, error)
-	GetSession(ctx context.Context, userID int64) (Session, error)
+	GetSession(ctx context.Context, id uuid.UUID) (Session, error)
 	GetSubscribedUsers(ctx context.Context) ([]User, error)
 	GetUser(ctx context.Context, id int64) (User, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)

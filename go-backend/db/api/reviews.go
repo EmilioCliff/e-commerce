@@ -10,11 +10,11 @@ import (
 )
 
 type addReviewRequestUri struct {
-	Id int64 `uri:"id" binding:"required"`
+	ID int64 `uri:"id" binding:"required"`
 }
 
 type addReviewRequestQuery struct {
-	UserId int64  `json:"user_id" binding:"required"`
+	UserID int64  `json:"user_id" binding:"required"`
 	Rating int32  `json:"rating" binding:"required"`
 	Review string `json:"review" binding:"required"`
 }
@@ -23,7 +23,7 @@ func (server *Server) addReview(ctx *gin.Context) {
 	payload := ctx.MustGet(PayloadKey)
 	payloadAssert := payload.(token.Payload)
 	if payloadAssert.IsAdmin {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"unathorized": "admin unauthorized to create review"})
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "admin unauthorized to create review"})
 		return
 	}
 
@@ -40,7 +40,7 @@ func (server *Server) addReview(ctx *gin.Context) {
 	}
 
 	review, err := server.store.CreateReveiw(ctx, db.CreateReveiwParams{
-		UserID: req.UserId,
+		UserID: req.UserID,
 		Rating: req.Rating,
 		Review: req.Review,
 	})
@@ -53,7 +53,7 @@ func (server *Server) addReview(ctx *gin.Context) {
 }
 
 type editReviewRequestUri struct {
-	Id int64 `uri:"id" binding:"required"`
+	ID int64 `uri:"id" binding:"required"`
 }
 
 type editReviewRequestQuery struct {
@@ -65,7 +65,7 @@ func (server *Server) editReview(ctx *gin.Context) {
 	payload := ctx.MustGet(PayloadKey)
 	payloadAssert := payload.(token.Payload)
 	if payloadAssert.IsAdmin {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"unathorized": "admin unauthorized to edit review"})
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "admin unauthorized to edit review"})
 		return
 	}
 
@@ -81,7 +81,7 @@ func (server *Server) editReview(ctx *gin.Context) {
 		return
 	}
 
-	review, err := server.store.GetReview(ctx, uri.Id)
+	review, err := server.store.GetReview(ctx, uri.ID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			ctx.JSON(http.StatusNotFound, errorResponse(err))
@@ -92,7 +92,7 @@ func (server *Server) editReview(ctx *gin.Context) {
 	}
 
 	if payloadAssert.UserID != review.UserID {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"unathorized": "user unauthorized to edit another users review"})
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "user unauthorized to edit another users review"})
 		return
 	}
 
@@ -105,7 +105,7 @@ func (server *Server) editReview(ctx *gin.Context) {
 	}
 
 	editedRevies, err := server.store.EditReview(ctx, db.EditReviewParams{
-		ID:     uri.Id,
+		ID:     uri.ID,
 		Rating: req.Rating,
 		Review: req.Review,
 	})
@@ -118,14 +118,14 @@ func (server *Server) editReview(ctx *gin.Context) {
 }
 
 type deleteReviewRequest struct {
-	Id int64 `uri:"id" binding:"required"`
+	ID int64 `uri:"id" binding:"required"`
 }
 
 func (server *Server) deleteReview(ctx *gin.Context) {
 	payload := ctx.MustGet(PayloadKey)
 	payloadAssert := payload.(token.Payload)
 	if payloadAssert.IsAdmin {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"unathorized": "admin unauthorized to delete review"})
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "admin unauthorized to delete review"})
 		return
 	}
 
@@ -135,7 +135,7 @@ func (server *Server) deleteReview(ctx *gin.Context) {
 		return
 	}
 
-	review, err := server.store.GetReview(ctx, uri.Id)
+	review, err := server.store.GetReview(ctx, uri.ID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			ctx.JSON(http.StatusNotFound, errorResponse(err))
@@ -146,14 +146,14 @@ func (server *Server) deleteReview(ctx *gin.Context) {
 	}
 
 	if payloadAssert.UserID != review.UserID {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"unathorized": "user unauthorized to delete another user review"})
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "user unauthorized to delete another user review"})
 		return
 	}
 
-	if err := server.store.DeleteReview(ctx, uri.Id); err != nil {
+	if err := server.store.DeleteReview(ctx, uri.ID); err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"delete": "review deleted successful"})
+	ctx.JSON(http.StatusOK, gin.H{"success": "review deleted successful"})
 }

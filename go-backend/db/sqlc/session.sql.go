@@ -8,18 +8,49 @@ package db
 import (
 	"context"
 	"time"
+
+	"github.com/google/uuid"
 )
+
+const blockSession = `-- name: BlockSession :one
+UPDATE sessions 
+    set is_blocked = $1
+WHERE id = $2
+RETURNING id, user_id, refresh_token, is_blocked, user_agent, user_ip, expires_at, created_at
+`
+
+type BlockSessionParams struct {
+	IsBlocked bool      `json:"is_blocked"`
+	ID        uuid.UUID `json:"id"`
+}
+
+func (q *Queries) BlockSession(ctx context.Context, arg BlockSessionParams) (Session, error) {
+	row := q.db.QueryRow(ctx, blockSession, arg.IsBlocked, arg.ID)
+	var i Session
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.RefreshToken,
+		&i.IsBlocked,
+		&i.UserAgent,
+		&i.UserIp,
+		&i.ExpiresAt,
+		&i.CreatedAt,
+	)
+	return i, err
+}
 
 const createSession = `-- name: CreateSession :one
 INSERT INTO sessions (
-    user_id, refresh_token, is_blocked, user_agent, user_ip, expires_at
+    id, user_id, refresh_token, is_blocked, user_agent, user_ip, expires_at
 ) VALUES (
-    $1, $2, $3, $4, $5, $6
+    $1, $2, $3, $4, $5, $6, $7
 )
 RETURNING id, user_id, refresh_token, is_blocked, user_agent, user_ip, expires_at, created_at
 `
 
 type CreateSessionParams struct {
+	ID           uuid.UUID `json:"id"`
 	UserID       int64     `json:"user_id"`
 	RefreshToken string    `json:"refresh_token"`
 	IsBlocked    bool      `json:"is_blocked"`
@@ -30,6 +61,7 @@ type CreateSessionParams struct {
 
 func (q *Queries) CreateSession(ctx context.Context, arg CreateSessionParams) (Session, error) {
 	row := q.db.QueryRow(ctx, createSession,
+		arg.ID,
 		arg.UserID,
 		arg.RefreshToken,
 		arg.IsBlocked,
@@ -53,11 +85,11 @@ func (q *Queries) CreateSession(ctx context.Context, arg CreateSessionParams) (S
 
 const getSession = `-- name: GetSession :one
 SELECT id, user_id, refresh_token, is_blocked, user_agent, user_ip, expires_at, created_at FROM sessions
-WHERE user_id = $1 LIMIT ONE
+WHERE id = $1 LIMIT 1
 `
 
-func (q *Queries) GetSession(ctx context.Context, userID int64) (Session, error) {
-	row := q.db.QueryRow(ctx, getSession, userID)
+func (q *Queries) GetSession(ctx context.Context, id uuid.UUID) (Session, error) {
+	row := q.db.QueryRow(ctx, getSession, id)
 	var i Session
 	err := row.Scan(
 		&i.ID,
