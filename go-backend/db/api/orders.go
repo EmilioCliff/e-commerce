@@ -56,10 +56,11 @@ type createOrderRequestUri struct {
 }
 
 type createOrderRequestQuery struct {
-	ProductIds      []int64 `json:"product_ids"`
-	Quantity        []int32 `json:"quantities"`
-	Amount          int64   `json:"amount" binding:"required"`
-	ShippingAddress string  `json:"shipping_address" binding:"required"`
+	ProductIds      []int64  `json:"product_ids" binding:"required"`
+	Quantity        []int32  `json:"quantities" binding:"required"`
+	Colors          []string `json:"colors"`
+	Size            []string `json:"size"`
+	ShippingAddress string   `json:"shipping_address" binding:"required"`
 }
 
 // Create order and empty the cart list and send receipts
@@ -69,27 +70,69 @@ func (server *Server) createOrder(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 	}
 	var req createOrderRequestQuery
-	if err := ctx.ShouldBindQuery(&req); err != nil {
+	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 	}
 
-	// type Order struct {
-	// 	ID              int64     `json:"id"`
-	// 	UserID          int64     `json:"user_id"`
-	// 	Amount          float64   `json:"amount"`
-	// 	Status          string    `json:"status"`
-	// 	ShippingAddress string    `json:"shipping_address"`
-	// 	CreatedAt       time.Time `json:"created_at"`
-	// }
+	var amount float64
+	for idx, productId := range req.ProductIds {
+		product, err := server.store.GetProduct(ctx, productId)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				ctx.JSON(http.StatusNotFound, errorResponse(err))
+				return
+			}
+			ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+			return
+		}
 
-	// first calculate the total amount, this can be calculated by looping over the product ids provided
-	//
+		if *product.Discount != 0.0 {
+			calculatedPrice := product.Price * (100 - *product.Discount)
+			amount += calculatedPrice * float64(req.Quantity[idx])
+			continue
+		}
 
-	// TODO: distribute task to asynq to send_stk_push then processit and create a transactions
-	//		 wait for the mpesa callback url then process it and update the transactions if successful empty the cart list.
+		amount += product.Price * float64(req.Quantity[idx])
+
+	}
+	// ACHIEVE THESE THROUGH A TRANSACTION
+	// TODO: calculate the total shipping fee then distribute task to asynq to send_stk_push then processit and create a transactions
+	//		 wait for the mpesa callback url then process it and update the transactions if successful
+	//		 create the order and its order_items then empty the cart list.
 	//       Send receipt order to user if successfull transactions.
 
-	ctx.JSON(http.StatusOK, gin.H{"order": "creating order"})
+	order, err := server.store.CreateOrder(ctx, db.CreateOrderParams{
+		UserID:          uri.Id,
+		Amount:          amount,
+		ShippingAddress: req.ShippingAddress,
+	})
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	for idx, productId := range req.ProductIds {
+		_, err := server.store.CreateOrderItem(ctx, db.CreateOrderItemParams{
+			OrderID:   order.ID,
+			ProductID: productId,
+			Quantity:  req.Quantity[idx],
+			Color:     &req.Colors[idx],
+			Size:      &req.Size[idx],
+		})
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+			return
+		}
+	}
+
+	rsp, err := server.newOrderResponse(order, ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, rsp)
+	// ctx.JSON(http.StatusOK, gin.H{"order": "creating order"})
 }
 
 type getOrderRequest struct {
@@ -115,7 +158,7 @@ func (server *Server) getOrder(ctx *gin.Context) {
 
 	payload := ctx.MustGet(PayloadKey)
 	payloadAssert := payload.(token.Payload)
-	if !payloadAssert.IsAdmin && payloadAssert.UserId == order.UserID {
+	if !payloadAssert.IsAdmin && payloadAssert.UserID == order.UserID {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"unathorized": "user unauthorized to view another user order"})
 		return
 	}
@@ -171,7 +214,7 @@ func (server *Server) listUsersOrders(ctx *gin.Context) {
 
 	payload := ctx.MustGet(PayloadKey)
 	payloadAssert := payload.(token.Payload)
-	if !payloadAssert.IsAdmin && payloadAssert.UserId != req.Id {
+	if !payloadAssert.IsAdmin && payloadAssert.UserID != req.Id {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"unauthorized": "user can not view another users orders"})
 		return
 	}

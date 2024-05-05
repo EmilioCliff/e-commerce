@@ -17,22 +17,22 @@ type EmailSender interface {
 }
 
 type GmailSender struct {
-	name                string
-	from_email_address  string
-	from_email_password string
+	name              string
+	fromEmailAddress  string
+	fromEmailPassword string
 }
 
-func NewGmailSender(name, email_address, email_password string) EmailSender {
+func NewGmailSender(name, emailAddress, emailPassword string) EmailSender {
 	return &GmailSender{
-		name:                name,
-		from_email_address:  email_address,
-		from_email_password: email_password,
+		name:              name,
+		fromEmailAddress:  emailAddress,
+		fromEmailPassword: emailPassword,
 	}
 }
 
 func (sender *GmailSender) SendEmail(title string, content string, mimeType string, to []string, cc []string, bcc []string, attachFiles []string, attachmentData [][]byte) error {
 	e := email.NewEmail()
-	e.From = fmt.Sprintf("%s <%s>", sender.name, sender.from_email_address)
+	e.From = fmt.Sprintf("%s <%s>", sender.name, sender.fromEmailAddress)
 	e.To = to
 	e.Cc = cc
 	e.Bcc = bcc
@@ -40,7 +40,10 @@ func (sender *GmailSender) SendEmail(title string, content string, mimeType stri
 
 	for i, f := range attachmentData {
 		attachReader := bytes.NewReader(f)
-		e.Attach(attachReader, attachFiles[i], mimeType)
+		_, err := e.Attach(attachReader, attachFiles[i], mimeType)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

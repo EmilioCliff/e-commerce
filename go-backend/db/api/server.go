@@ -3,6 +3,7 @@ package api
 import (
 	db "github.com/EmilioCliff/e-commerce/db/sqlc"
 	"github.com/EmilioCliff/e-commerce/db/token"
+	"github.com/EmilioCliff/e-commerce/db/utils"
 	"github.com/EmilioCliff/e-commerce/db/worker"
 	"github.com/gin-gonic/gin"
 )
@@ -12,15 +13,17 @@ type Server struct {
 	store       *db.Store
 	router      *gin.Engine
 	maker       token.Maker
+	config      utils.Config
 	distributor *worker.RedisTaskDistributor
 }
 
 // Create a server
-func NewServer(store *db.Store, maker token.Maker, distributor *worker.RedisTaskDistributor) *Server {
+func NewServer(store *db.Store, maker token.Maker, config utils.Config, distributor *worker.RedisTaskDistributor) *Server {
 	server := Server{
 		store:       store,
 		maker:       maker,
 		distributor: distributor,
+		config:      config,
 	}
 
 	server.setRoutes()

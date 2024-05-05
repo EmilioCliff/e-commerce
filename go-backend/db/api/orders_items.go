@@ -10,19 +10,17 @@ import (
 )
 
 type responseOrderItem struct {
-	ProductName string  `json:"product_name"`
-	Description string  `json:"description"`
-	Price       float64 `json:"price"`
-	Quantity    int32   `json:"quantity"`
-	Amount      float64 `json:"amount"`
-	// admins may have discount. Float of percentage ie 14.5
-	Discount *float64 `json:"discount"`
-	Size     *string  `json:"size_options"`
-	Color    *string  `json:"color_options"`
-	Category string   `json:"category"`
-	Brand    *string  `json:"brand"`
-	// list of file paths to the product images
-	ImageUrl []string `json:"image_url"`
+	ProductName string   `json:"product_name"`
+	Description string   `json:"description"`
+	Price       float64  `json:"price"`
+	Quantity    int32    `json:"quantity"`
+	Amount      float64  `json:"amount"`
+	Discount    *float64 `json:"discount"`
+	Size        *string  `json:"size_options"`
+	Color       *string  `json:"color_options"`
+	Category    string   `json:"category"`
+	Brand       *string  `json:"brand"`
+	ImageUrl    []string `json:"image_url"`
 }
 
 func (server *Server) newOrderItemResponse(orderItem db.OrderItem, ctx *gin.Context) (responseOrderItem, float64, error) {
@@ -113,7 +111,7 @@ func (server *Server) getOrderItemsOfAnOrder(ctx *gin.Context) {
 
 	payload := ctx.MustGet(PayloadKey)
 	payloadAssert := payload.(token.Payload)
-	if !payloadAssert.IsAdmin && payloadAssert.UserId == order.UserID {
+	if !payloadAssert.IsAdmin && payloadAssert.UserID == order.UserID {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"unathorized": "user unauthorized to view another user orderItems"})
 		return
 	}
@@ -134,6 +132,31 @@ func (server *Server) getOrderItemsOfAnOrder(ctx *gin.Context) {
 		}
 
 		rsp["order_items"] = append(rsp["order_items"], structuredOrderItem)
+	}
+
+	ctx.JSON(http.StatusOK, rsp)
+}
+
+func (server *Server) listOrderItems(ctx *gin.Context) {
+	orderItems, err := server.store.ListOrderItems(ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	var rsp map[int64][]responseOrderItem
+	for _, orderItem := range orderItems {
+		structuredOrderItem, _, err := server.newOrderItemResponse(orderItem, ctx)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+			return
+		}
+
+		if _, ok := rsp[orderItem.OrderID]; !ok {
+			rsp[orderItem.OrderID] = make([]responseOrderItem, len(orderItems))
+		}
+
+		rsp[orderItem.OrderID] = append(rsp[orderItem.OrderID], structuredOrderItem)
 	}
 
 	ctx.JSON(http.StatusOK, rsp)

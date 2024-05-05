@@ -25,6 +25,16 @@ Table users {
   }
 }
 
+Table sessions {
+  id uuid [pk]
+  username_id bigint [not null, ref: > users.id]
+  refresh_token varchar [not null]
+  is_blocked boolean [not null, default: false]
+  user_agent varchar [not null]
+  user_ip varchar [not null]
+  expires_at timestamptz [default: `now()`]
+}
+
 Table products {
   id bigserial [pk]
   product_name varchar [not null, unique]
@@ -33,8 +43,8 @@ Table products {
   quantity integer [default: 0]
   discount float [note: "admins may have discount. Float of percentage ie 14.5"]
   rating integer [note: "calculate when reviews is created. 1-5"]
-  size_options integer[]
-  color_options varchar[]
+  size_options varchar[] [note: "list of size in string format ie '12.6'"]
+  color_options varchar[] [note: "list of colors that the product has"]
   category varchar [not null]
   brand varchar
   image_url varchar[] [note: "list of file paths to the product images"]

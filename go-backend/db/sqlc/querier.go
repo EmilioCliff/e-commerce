@@ -13,6 +13,7 @@ type Querier interface {
 	CreateOrder(ctx context.Context, arg CreateOrderParams) (Order, error)
 	CreateOrderItem(ctx context.Context, arg CreateOrderItemParams) (OrderItem, error)
 	CreateReveiw(ctx context.Context, arg CreateReveiwParams) (Review, error)
+	CreateSession(ctx context.Context, arg CreateSessionParams) (Session, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	DeleteBlog(ctx context.Context, id int64) error
 	DeleteOrder(ctx context.Context, id int64) error
@@ -34,18 +35,23 @@ type Querier interface {
 	GetProductByUpdatedTime(ctx context.Context) ([]Product, error)
 	GetProductReviews(ctx context.Context, productID int64) ([]Review, error)
 	GetReview(ctx context.Context, id int64) (Review, error)
+	GetSession(ctx context.Context, userID int64) (Session, error)
 	GetSubscribedUsers(ctx context.Context) ([]User, error)
 	GetUser(ctx context.Context, id int64) (User, error)
+	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserForUpdate(ctx context.Context, id int64) (User, error)
 	GetUserOrders(ctx context.Context, userID int64) ([]Order, error)
 	GetUsersReviews(ctx context.Context, userID int64) ([]Review, error)
 	ListBlogs(ctx context.Context) ([]Blog, error)
-	ListOrderItems(ctx context.Context, id int64) ([]OrderItem, error)
+	ListOrderItems(ctx context.Context) ([]OrderItem, error)
 	ListOrders(ctx context.Context) ([]Order, error)
 	ListUsers(ctx context.Context) ([]User, error)
 	UpdateOrder(ctx context.Context, arg UpdateOrderParams) (Order, error)
 	UpdateOrderItems(ctx context.Context, arg UpdateOrderItemsParams) (OrderItem, error)
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error)
+	UpdateUserCart(ctx context.Context, arg UpdateUserCartParams) (User, error)
+	UpdateUserCredentials(ctx context.Context, arg UpdateUserCredentialsParams) (User, error)
+	UpdateUserSubscription(ctx context.Context, arg UpdateUserSubscriptionParams) (User, error)
 }
 
 var _ Querier = (*Queries)(nil)

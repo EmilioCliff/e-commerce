@@ -8,7 +8,7 @@ RETURNING *;
 
 -- name: ListOrderItems :many
 SELECT * FROM order_items
-WHERE id = $1;
+ORDER BY order_id;
 
 -- name: GetOrderOrderItems :many
 SELECT * FROM order_items

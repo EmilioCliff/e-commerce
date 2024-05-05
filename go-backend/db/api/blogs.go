@@ -10,6 +10,7 @@ import (
 )
 
 // TODO: How to pass content of a blog and what format to save it as
+// TODO: Send the created blog automatically to the subscribed users after creation
 type addBlogRequestQuery struct {
 	Title   string `json:"title" binding:"required"`
 	Content string `json:"content" binding:"required"`
@@ -91,7 +92,7 @@ func (server *Server) editBlog(ctx *gin.Context) {
 		return
 	}
 
-	if payloadAssert.UserId != blogToEdit.Author {
+	if payloadAssert.UserID != blogToEdit.Author {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"unathorized": "admin unauthorized to edit another admins blog"})
 		return
 	}
@@ -155,7 +156,7 @@ func (server *Server) deleteBlog(ctx *gin.Context) {
 		return
 	}
 
-	if payloadAssert.UserId != blogToDelete.Author {
+	if payloadAssert.UserID != blogToDelete.Author {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"unathorized": "admin unauthorized to delete another admins blog"})
 		return
 	}

@@ -8,29 +8,29 @@ import (
 	"github.com/google/uuid"
 )
 
-var ErrTokenExpired = errors.New("Token has expired")
+var ErrTokenExpired = errors.New("token has expired")
 
 const (
 	Footer = "E-commerce Website"
 )
 
 type Payload struct {
-	Id        uuid.UUID `json:"id"`
-	UserId    int64     `json:"user_id"`
+	ID        uuid.UUID `json:"id"`
+	UserID    int64     `json:"user_id"`
 	IsAdmin   bool      `json:"is_admin"`
 	CreatedAt time.Time `json:"created_at"`
 	ExpireAt  time.Time `json:"expire_at"`
 }
 
 // creates a new payload for the token payload
-func NewPayload(user_id int64, expire_at time.Duration, admin bool) (*Payload, error) {
+func NewPayload(userID int64, expire_at time.Duration, admin bool) (*Payload, error) {
 	id, err := uuid.NewUUID()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create uuid for token payload: %w", err)
 	}
 	return &Payload{
-		Id:        id,
-		UserId:    user_id,
+		ID:        id,
+		UserID:    userID,
 		IsAdmin:   admin,
 		CreatedAt: time.Now(),
 		ExpireAt:  time.Now().Add(expire_at),

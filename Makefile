@@ -16,8 +16,14 @@ migrateup:
 migratedown:
 	migrate -path go-backend/db/migrations -database postgresql://root:secret@localhost:5432/e-commerce?sslmode=disable -verbose down
 
+createMigrate:
+	migrate create -ext sql -dir go-backend/db/migrations  -seq <migration_name>
+
 # Generate sqlc
 sqlc:
 	sqlc generate
+
+lint:
+	cd go-backend && golangci-lint run --enable-all
 
 .PHONY: postgres createdb dropdb migrateup migratedown sqlc

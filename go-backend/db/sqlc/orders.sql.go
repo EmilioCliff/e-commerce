@@ -7,32 +7,25 @@ package db
 
 import (
 	"context"
-	"time"
 )
 
 const createOrder = `-- name: CreateOrder :one
 INSERT INTO orders (
-    user_id, amount, shipping_address, created_at
+    user_id, amount, shipping_address
 ) VALUES (
-    $1, $2, $3, $4
+    $1, $2, $3
 )
 RETURNING id, user_id, amount, status, shipping_address, created_at
 `
 
 type CreateOrderParams struct {
-	UserID          int64     `json:"user_id"`
-	Amount          float64   `json:"amount"`
-	ShippingAddress string    `json:"shipping_address"`
-	CreatedAt       time.Time `json:"created_at"`
+	UserID          int64   `json:"user_id"`
+	Amount          float64 `json:"amount"`
+	ShippingAddress string  `json:"shipping_address"`
 }
 
 func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (Order, error) {
-	row := q.db.QueryRow(ctx, createOrder,
-		arg.UserID,
-		arg.Amount,
-		arg.ShippingAddress,
-		arg.CreatedAt,
-	)
+	row := q.db.QueryRow(ctx, createOrder, arg.UserID, arg.Amount, arg.ShippingAddress)
 	var i Order
 	err := row.Scan(
 		&i.ID,

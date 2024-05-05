@@ -12,11 +12,11 @@ import (
 
 const createUser = `-- name: CreateUser :one
 INSERT INTO users (
-    username, email, password, subscription, token, refresh_token, user_cart, role
+    username, email, password, subscription, user_cart, role
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8
+    $1, $2, $3, $4, $5, $6
 )
-RETURNING id, username, email, password, subscription, token, refresh_token, user_cart, role, created_at, updated_at
+RETURNING id, username, email, password, subscription, user_cart, role, created_at, updated_at
 `
 
 type CreateUserParams struct {
@@ -24,9 +24,7 @@ type CreateUserParams struct {
 	Email        string  `json:"email"`
 	Password     string  `json:"password"`
 	Subscription bool    `json:"subscription"`
-	Token        string  `json:"token"`
-	RefreshToken string  `json:"refresh_token"`
-	UserCart     []int32 `json:"user_cart"`
+	UserCart     []int64 `json:"user_cart"`
 	Role         string  `json:"role"`
 }
 
@@ -36,8 +34,6 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		arg.Email,
 		arg.Password,
 		arg.Subscription,
-		arg.Token,
-		arg.RefreshToken,
 		arg.UserCart,
 		arg.Role,
 	)
@@ -48,8 +44,6 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.Email,
 		&i.Password,
 		&i.Subscription,
-		&i.Token,
-		&i.RefreshToken,
 		&i.UserCart,
 		&i.Role,
 		&i.CreatedAt,
@@ -69,7 +63,7 @@ func (q *Queries) DeleteUser(ctx context.Context, id int64) error {
 }
 
 const getSubscribedUsers = `-- name: GetSubscribedUsers :many
-SELECT id, username, email, password, subscription, token, refresh_token, user_cart, role, created_at, updated_at FROM users
+SELECT id, username, email, password, subscription, user_cart, role, created_at, updated_at FROM users
 WHERE
     subscription = true
 ORDER BY username
@@ -90,8 +84,6 @@ func (q *Queries) GetSubscribedUsers(ctx context.Context) ([]User, error) {
 			&i.Email,
 			&i.Password,
 			&i.Subscription,
-			&i.Token,
-			&i.RefreshToken,
 			&i.UserCart,
 			&i.Role,
 			&i.CreatedAt,
@@ -108,7 +100,7 @@ func (q *Queries) GetSubscribedUsers(ctx context.Context) ([]User, error) {
 }
 
 const getUser = `-- name: GetUser :one
-SELECT id, username, email, password, subscription, token, refresh_token, user_cart, role, created_at, updated_at FROM users
+SELECT id, username, email, password, subscription, user_cart, role, created_at, updated_at FROM users
 WHERE id = $1 LIMIT 1
 `
 
@@ -121,8 +113,28 @@ func (q *Queries) GetUser(ctx context.Context, id int64) (User, error) {
 		&i.Email,
 		&i.Password,
 		&i.Subscription,
-		&i.Token,
-		&i.RefreshToken,
+		&i.UserCart,
+		&i.Role,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getUserByEmail = `-- name: GetUserByEmail :one
+SELECT id, username, email, password, subscription, user_cart, role, created_at, updated_at FROM users
+WHERE email = $1 LIMIT 1
+`
+
+func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
+	row := q.db.QueryRow(ctx, getUserByEmail, email)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.Email,
+		&i.Password,
+		&i.Subscription,
 		&i.UserCart,
 		&i.Role,
 		&i.CreatedAt,
@@ -132,7 +144,7 @@ func (q *Queries) GetUser(ctx context.Context, id int64) (User, error) {
 }
 
 const getUserForUpdate = `-- name: GetUserForUpdate :one
-SELECT id, username, email, password, subscription, token, refresh_token, user_cart, role, created_at, updated_at FROM users
+SELECT id, username, email, password, subscription, user_cart, role, created_at, updated_at FROM users
 WHERE id = $1 LIMIT 1
 FOR NO KEY UPDATE
 `
@@ -146,8 +158,6 @@ func (q *Queries) GetUserForUpdate(ctx context.Context, id int64) (User, error) 
 		&i.Email,
 		&i.Password,
 		&i.Subscription,
-		&i.Token,
-		&i.RefreshToken,
 		&i.UserCart,
 		&i.Role,
 		&i.CreatedAt,
@@ -157,7 +167,7 @@ func (q *Queries) GetUserForUpdate(ctx context.Context, id int64) (User, error) 
 }
 
 const listUsers = `-- name: ListUsers :many
-SELECT id, username, email, password, subscription, token, refresh_token, user_cart, role, created_at, updated_at FROM users
+SELECT id, username, email, password, subscription, user_cart, role, created_at, updated_at FROM users
 ORDER BY username
 `
 
@@ -176,8 +186,6 @@ func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
 			&i.Email,
 			&i.Password,
 			&i.Subscription,
-			&i.Token,
-			&i.RefreshToken,
 			&i.UserCart,
 			&i.Role,
 			&i.CreatedAt,
@@ -199,12 +207,10 @@ UPDATE users
     email = $2,
     password = $3,
     subscription = $4,
-    token = $5,
-    refresh_token = $6,
-    user_cart = $7,
-    updated_at = $8
-WHERE id = $9
-RETURNING id, username, email, password, subscription, token, refresh_token, user_cart, role, created_at, updated_at
+    user_cart = $5,
+    updated_at = $6
+WHERE id = $7
+RETURNING id, username, email, password, subscription, user_cart, role, created_at, updated_at
 `
 
 type UpdateUserParams struct {
@@ -212,9 +218,7 @@ type UpdateUserParams struct {
 	Email        string    `json:"email"`
 	Password     string    `json:"password"`
 	Subscription bool      `json:"subscription"`
-	Token        string    `json:"token"`
-	RefreshToken string    `json:"refresh_token"`
-	UserCart     []int32   `json:"user_cart"`
+	UserCart     []int64   `json:"user_cart"`
 	UpdatedAt    time.Time `json:"updated_at"`
 	ID           int64     `json:"id"`
 }
@@ -225,8 +229,6 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, e
 		arg.Email,
 		arg.Password,
 		arg.Subscription,
-		arg.Token,
-		arg.RefreshToken,
 		arg.UserCart,
 		arg.UpdatedAt,
 		arg.ID,
@@ -238,8 +240,105 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, e
 		&i.Email,
 		&i.Password,
 		&i.Subscription,
-		&i.Token,
-		&i.RefreshToken,
+		&i.UserCart,
+		&i.Role,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const updateUserCart = `-- name: UpdateUserCart :one
+UPDATE users
+    set user_cart = $1
+WHERE id = $2
+RETURNING id, username, email, password, subscription, user_cart, role, created_at, updated_at
+`
+
+type UpdateUserCartParams struct {
+	UserCart []int64 `json:"user_cart"`
+	ID       int64   `json:"id"`
+}
+
+func (q *Queries) UpdateUserCart(ctx context.Context, arg UpdateUserCartParams) (User, error) {
+	row := q.db.QueryRow(ctx, updateUserCart, arg.UserCart, arg.ID)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.Email,
+		&i.Password,
+		&i.Subscription,
+		&i.UserCart,
+		&i.Role,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const updateUserCredentials = `-- name: UpdateUserCredentials :one
+UPDATE users
+    set username = $1,
+    password = $2,
+    role = $3,
+    updated_at = $4
+WHERE id = $4
+RETURNING id, username, email, password, subscription, user_cart, role, created_at, updated_at
+`
+
+type UpdateUserCredentialsParams struct {
+	Username  string    `json:"username"`
+	Password  string    `json:"password"`
+	Role      string    `json:"role"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+func (q *Queries) UpdateUserCredentials(ctx context.Context, arg UpdateUserCredentialsParams) (User, error) {
+	row := q.db.QueryRow(ctx, updateUserCredentials,
+		arg.Username,
+		arg.Password,
+		arg.Role,
+		arg.UpdatedAt,
+	)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.Email,
+		&i.Password,
+		&i.Subscription,
+		&i.UserCart,
+		&i.Role,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const updateUserSubscription = `-- name: UpdateUserSubscription :one
+UPDATE users
+    set subscription = $1,
+    updated_at = $3
+WHERE id = $2
+RETURNING id, username, email, password, subscription, user_cart, role, created_at, updated_at
+`
+
+type UpdateUserSubscriptionParams struct {
+	Subscription bool      `json:"subscription"`
+	ID           int64     `json:"id"`
+	UpdatedAt    time.Time `json:"updated_at"`
+}
+
+func (q *Queries) UpdateUserSubscription(ctx context.Context, arg UpdateUserSubscriptionParams) (User, error) {
+	row := q.db.QueryRow(ctx, updateUserSubscription, arg.Subscription, arg.ID, arg.UpdatedAt)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.Email,
+		&i.Password,
+		&i.Subscription,
 		&i.UserCart,
 		&i.Role,
 		&i.CreatedAt,

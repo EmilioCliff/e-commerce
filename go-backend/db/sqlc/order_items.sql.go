@@ -109,11 +109,11 @@ func (q *Queries) GetOrderOrderItems(ctx context.Context, orderID int64) ([]Orde
 
 const listOrderItems = `-- name: ListOrderItems :many
 SELECT id, order_id, product_id, color, size, quantity FROM order_items
-WHERE id = $1
+ORDER BY order_id
 `
 
-func (q *Queries) ListOrderItems(ctx context.Context, id int64) ([]OrderItem, error) {
-	rows, err := q.db.Query(ctx, listOrderItems, id)
+func (q *Queries) ListOrderItems(ctx context.Context) ([]OrderItem, error) {
+	rows, err := q.db.Query(ctx, listOrderItems)
 	if err != nil {
 		return nil, err
 	}

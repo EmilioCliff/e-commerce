@@ -91,7 +91,7 @@ func (server *Server) editReview(ctx *gin.Context) {
 		return
 	}
 
-	if payloadAssert.UserId != review.UserID {
+	if payloadAssert.UserID != review.UserID {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"unathorized": "user unauthorized to edit another users review"})
 		return
 	}
@@ -145,7 +145,7 @@ func (server *Server) deleteReview(ctx *gin.Context) {
 		return
 	}
 
-	if payloadAssert.UserId != review.UserID {
+	if payloadAssert.UserID != review.UserID {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"unathorized": "user unauthorized to delete another user review"})
 		return
 	}

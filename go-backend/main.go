@@ -7,6 +7,7 @@ import (
 	"github.com/EmilioCliff/e-commerce/db/api"
 	db "github.com/EmilioCliff/e-commerce/db/sqlc"
 	token "github.com/EmilioCliff/e-commerce/db/token"
+	"github.com/EmilioCliff/e-commerce/db/utils"
 	"github.com/EmilioCliff/e-commerce/db/worker"
 	"github.com/hibiken/asynq"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -15,6 +16,11 @@ import (
 )
 
 func main() {
+	config, err := utils.ReadConfig(".")
+	if err != nil {
+		log.Fatal().Msgf("Failed to load config file: %v", err)
+	}
+
 	conn, err := pgxpool.New(context.Background(), "postgresql://root:secret@localhost:5432/e-commerce?sslmode=diable")
 	if err != nil {
 		log.Fatal().
@@ -52,7 +58,7 @@ func main() {
 	}
 
 	go runRedisProcessorServer(redisOpt, store)
-	server := api.NewServer(store, maker, &taskDistributor)
+	server := api.NewServer(store, maker, config, &taskDistributor)
 	err = server.Start("0.0.0.0:8080")
 	if err != nil {
 		fmt.Println("error starting the server")

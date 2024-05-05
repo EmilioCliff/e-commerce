@@ -3,10 +3,8 @@ CREATE TABLE "users" (
   "username" varchar NOT NULL,
   "email" varchar UNIQUE NOT NULL,
   "password" varchar NOT NULL,
-  "subscription" bool NOT NULL DEFAULT False,
-  "token" varchar NOT NULL,
-  "refresh_token" varchar NOT NULL,
-  "user_cart" integer[],
+  "subscription" boolean NOT NULL DEFAULT False,
+  "user_cart" bigint[],
   "role" varchar NOT NULL,
   "created_at" timestamptz NOT NULL DEFAULT (now()),
   "updated_at" timestamptz NOT NULL DEFAULT (now())
