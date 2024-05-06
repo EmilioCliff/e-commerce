@@ -124,8 +124,9 @@ func (server *Server) getOrderItemsOfAnOrder(ctx *gin.Context) {
 		return
 	}
 
-	var rsp map[string][]responseOrderItem
+	rsp := make(map[string][]responseOrderItem)
 	rsp["order_items"] = make([]responseOrderItem, len(orderItems))
+	// var rsp []responseOrderItem
 	for _, orderItem := range orderItems {
 		structuredOrderItem, _, err := server.newOrderItemResponse(orderItem, ctx)
 		if err != nil {
@@ -134,6 +135,7 @@ func (server *Server) getOrderItemsOfAnOrder(ctx *gin.Context) {
 		}
 
 		rsp["order_items"] = append(rsp["order_items"], structuredOrderItem)
+		// rsp = append(rsp, structuredOrderItem)
 	}
 
 	ctx.JSON(http.StatusOK, rsp)
@@ -146,7 +148,8 @@ func (server *Server) listOrderItems(ctx *gin.Context) {
 		return
 	}
 
-	var rsp map[int64][]responseOrderItem
+	// var rsp map[int64][]responseOrderItem
+	rsp := make(map[int64][]responseOrderItem)
 	for _, orderItem := range orderItems {
 		structuredOrderItem, _, err := server.newOrderItemResponse(orderItem, ctx)
 		if err != nil {

@@ -7,7 +7,109 @@ package db
 
 import (
 	"context"
+	"time"
 )
+
+const addProductQuantity = `-- name: AddProductQuantity :one
+UPDATE products
+    set quantity = $1
+WHERE id = $2
+RETURNING id, product_name, description, price, quantity, discount, rating, size_options, color_options, category, brand, image_url, created_at, updated_at
+`
+
+type AddProductQuantityParams struct {
+	Quantity int64 `json:"quantity"`
+	ID       int64 `json:"id"`
+}
+
+func (q *Queries) AddProductQuantity(ctx context.Context, arg AddProductQuantityParams) (Product, error) {
+	row := q.db.QueryRow(ctx, addProductQuantity, arg.Quantity, arg.ID)
+	var i Product
+	err := row.Scan(
+		&i.ID,
+		&i.ProductName,
+		&i.Description,
+		&i.Price,
+		&i.Quantity,
+		&i.Discount,
+		&i.Rating,
+		&i.SizeOptions,
+		&i.ColorOptions,
+		&i.Category,
+		&i.Brand,
+		&i.ImageUrl,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const createProduct = `-- name: CreateProduct :one
+INSERT INTO products (
+    product_name, description, price, quantity, discount, rating, size_options, color_options, category, brand, image_url
+) VALUES (
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
+)
+RETURNING id, product_name, description, price, quantity, discount, rating, size_options, color_options, category, brand, image_url, created_at, updated_at
+`
+
+type CreateProductParams struct {
+	ProductName  string   `json:"product_name"`
+	Description  string   `json:"description"`
+	Price        float64  `json:"price"`
+	Quantity     int64    `json:"quantity"`
+	Discount     *float64 `json:"discount"`
+	Rating       *float64 `json:"rating"`
+	SizeOptions  []string `json:"size_options"`
+	ColorOptions []string `json:"color_options"`
+	Category     string   `json:"category"`
+	Brand        *string  `json:"brand"`
+	ImageUrl     []string `json:"image_url"`
+}
+
+func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (Product, error) {
+	row := q.db.QueryRow(ctx, createProduct,
+		arg.ProductName,
+		arg.Description,
+		arg.Price,
+		arg.Quantity,
+		arg.Discount,
+		arg.Rating,
+		arg.SizeOptions,
+		arg.ColorOptions,
+		arg.Category,
+		arg.Brand,
+		arg.ImageUrl,
+	)
+	var i Product
+	err := row.Scan(
+		&i.ID,
+		&i.ProductName,
+		&i.Description,
+		&i.Price,
+		&i.Quantity,
+		&i.Discount,
+		&i.Rating,
+		&i.SizeOptions,
+		&i.ColorOptions,
+		&i.Category,
+		&i.Brand,
+		&i.ImageUrl,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const deleteProduct = `-- name: DeleteProduct :exec
+DELETE FROM products
+WHERE id = $1
+`
+
+func (q *Queries) DeleteProduct(ctx context.Context, id int64) error {
+	_, err := q.db.Exec(ctx, deleteProduct, id)
+	return err
+}
 
 const getAllProducts = `-- name: GetAllProducts :many
 SELECT id, product_name, description, price, quantity, discount, rating, size_options, color_options, category, brand, image_url, created_at, updated_at FROM products
@@ -155,4 +257,131 @@ func (q *Queries) GetProductByUpdatedTime(ctx context.Context) ([]Product, error
 		return nil, err
 	}
 	return items, nil
+}
+
+const getProductForUpdate = `-- name: GetProductForUpdate :one
+SELECT  id, product_name, description, price, quantity, discount, rating, size_options, color_options, category, brand, image_url, created_at, updated_at FROM products
+WHERE id = $1
+FOR NO KEY UPDATE
+LIMIT 1
+`
+
+func (q *Queries) GetProductForUpdate(ctx context.Context, id int64) (Product, error) {
+	row := q.db.QueryRow(ctx, getProductForUpdate, id)
+	var i Product
+	err := row.Scan(
+		&i.ID,
+		&i.ProductName,
+		&i.Description,
+		&i.Price,
+		&i.Quantity,
+		&i.Discount,
+		&i.Rating,
+		&i.SizeOptions,
+		&i.ColorOptions,
+		&i.Category,
+		&i.Brand,
+		&i.ImageUrl,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const updateProduct = `-- name: UpdateProduct :one
+UPDATE products
+    set product_name = $1,
+    description = $2,
+    price = $3,
+    discount = $4,
+    size_options = $5,
+    color_options = $6,
+    category = $7,
+    brand = $8,
+    image_url = $9,
+    updated_at = $10
+WHERE id = $11
+RETURNING id, product_name, description, price, quantity, discount, rating, size_options, color_options, category, brand, image_url, created_at, updated_at
+`
+
+type UpdateProductParams struct {
+	ProductName  string    `json:"product_name"`
+	Description  string    `json:"description"`
+	Price        float64   `json:"price"`
+	Discount     *float64  `json:"discount"`
+	SizeOptions  []string  `json:"size_options"`
+	ColorOptions []string  `json:"color_options"`
+	Category     string    `json:"category"`
+	Brand        *string   `json:"brand"`
+	ImageUrl     []string  `json:"image_url"`
+	UpdatedAt    time.Time `json:"updated_at"`
+	ID           int64     `json:"id"`
+}
+
+func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (Product, error) {
+	row := q.db.QueryRow(ctx, updateProduct,
+		arg.ProductName,
+		arg.Description,
+		arg.Price,
+		arg.Discount,
+		arg.SizeOptions,
+		arg.ColorOptions,
+		arg.Category,
+		arg.Brand,
+		arg.ImageUrl,
+		arg.UpdatedAt,
+		arg.ID,
+	)
+	var i Product
+	err := row.Scan(
+		&i.ID,
+		&i.ProductName,
+		&i.Description,
+		&i.Price,
+		&i.Quantity,
+		&i.Discount,
+		&i.Rating,
+		&i.SizeOptions,
+		&i.ColorOptions,
+		&i.Category,
+		&i.Brand,
+		&i.ImageUrl,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const updateProductRating = `-- name: UpdateProductRating :one
+UPDATE products
+    set rating = $2
+WHERE id = $1
+RETURNING id, product_name, description, price, quantity, discount, rating, size_options, color_options, category, brand, image_url, created_at, updated_at
+`
+
+type UpdateProductRatingParams struct {
+	ID     int64    `json:"id"`
+	Rating *float64 `json:"rating"`
+}
+
+func (q *Queries) UpdateProductRating(ctx context.Context, arg UpdateProductRatingParams) (Product, error) {
+	row := q.db.QueryRow(ctx, updateProductRating, arg.ID, arg.Rating)
+	var i Product
+	err := row.Scan(
+		&i.ID,
+		&i.ProductName,
+		&i.Description,
+		&i.Price,
+		&i.Quantity,
+		&i.Discount,
+		&i.Rating,
+		&i.SizeOptions,
+		&i.ColorOptions,
+		&i.Category,
+		&i.Brand,
+		&i.ImageUrl,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }

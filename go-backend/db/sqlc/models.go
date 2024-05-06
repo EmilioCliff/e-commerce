@@ -45,7 +45,7 @@ type Product struct {
 	// admins may have discount. Float of percentage ie 14.5
 	Discount *float64 `json:"discount"`
 	// calculate when reviews is created. 1-5
-	Rating       *int32   `json:"rating"`
+	Rating       *float64 `json:"rating"`
 	SizeOptions  []string `json:"size_options"`
 	ColorOptions []string `json:"color_options"`
 	Category     string   `json:"category"`

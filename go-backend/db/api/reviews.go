@@ -40,9 +40,25 @@ func (server *Server) addReview(ctx *gin.Context) {
 	}
 
 	review, err := server.store.CreateReveiw(ctx, db.CreateReveiwParams{
-		UserID: req.UserID,
-		Rating: req.Rating,
-		Review: req.Review,
+		UserID:    req.UserID,
+		ProductID: uri.ID,
+		Rating:    req.Rating,
+		Review:    req.Review,
+	})
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	averageRating, err := server.store.StoreCalculateProductRating(ctx, uri.ID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	_, err = server.store.UpdateProductRating(ctx, db.UpdateProductRatingParams{
+		ID:     uri.ID,
+		Rating: &averageRating,
 	})
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))

@@ -17,7 +17,7 @@ CREATE TABLE "products" (
   "price" float NOT NULL,
   "quantity" bigint NOT NULL DEFAULT 0,
   "discount" float,
-  "rating" integer,
+  "rating" float,
   "size_options" varchar[],
   "color_options" varchar[],
   "category" varchar NOT NULL,

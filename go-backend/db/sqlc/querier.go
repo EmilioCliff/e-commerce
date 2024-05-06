@@ -11,16 +11,20 @@ import (
 )
 
 type Querier interface {
+	AddProductQuantity(ctx context.Context, arg AddProductQuantityParams) (Product, error)
 	BlockSession(ctx context.Context, arg BlockSessionParams) (Session, error)
+	CalculateProductRating(ctx context.Context, productID int64) (interface{}, error)
 	CreateBlog(ctx context.Context, arg CreateBlogParams) (Blog, error)
 	CreateOrder(ctx context.Context, arg CreateOrderParams) (Order, error)
 	CreateOrderItem(ctx context.Context, arg CreateOrderItemParams) (OrderItem, error)
+	CreateProduct(ctx context.Context, arg CreateProductParams) (Product, error)
 	CreateReveiw(ctx context.Context, arg CreateReveiwParams) (Review, error)
 	CreateSession(ctx context.Context, arg CreateSessionParams) (Session, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	DeleteBlog(ctx context.Context, id int64) error
 	DeleteOrder(ctx context.Context, id int64) error
 	DeleteOrderItem(ctx context.Context, id int64) error
+	DeleteProduct(ctx context.Context, id int64) error
 	DeleteReview(ctx context.Context, id int64) error
 	DeleteUser(ctx context.Context, id int64) error
 	EditBlog(ctx context.Context, arg EditBlogParams) (Blog, error)
@@ -36,6 +40,7 @@ type Querier interface {
 	GetProduct(ctx context.Context, id int64) (Product, error)
 	GetProductByCategory(ctx context.Context, category string) ([]Product, error)
 	GetProductByUpdatedTime(ctx context.Context) ([]Product, error)
+	GetProductForUpdate(ctx context.Context, id int64) (Product, error)
 	GetProductReviews(ctx context.Context, productID int64) ([]Review, error)
 	GetReview(ctx context.Context, id int64) (Review, error)
 	GetSession(ctx context.Context, id uuid.UUID) (Session, error)
@@ -51,6 +56,8 @@ type Querier interface {
 	ListUsers(ctx context.Context) ([]User, error)
 	UpdateOrder(ctx context.Context, arg UpdateOrderParams) (Order, error)
 	UpdateOrderItems(ctx context.Context, arg UpdateOrderItemsParams) (OrderItem, error)
+	UpdateProduct(ctx context.Context, arg UpdateProductParams) (Product, error)
+	UpdateProductRating(ctx context.Context, arg UpdateProductRatingParams) (Product, error)
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error)
 	UpdateUserCart(ctx context.Context, arg UpdateUserCartParams) (User, error)
 	UpdateUserCredentials(ctx context.Context, arg UpdateUserCredentialsParams) (User, error)

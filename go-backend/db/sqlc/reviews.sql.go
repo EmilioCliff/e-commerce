@@ -9,6 +9,19 @@ import (
 	"context"
 )
 
+const calculateProductRating = `-- name: CalculateProductRating :one
+SELECT COALESCE(AVG(rating), 0) AS average_rating
+FROM reviews
+WHERE product_id = $1
+`
+
+func (q *Queries) CalculateProductRating(ctx context.Context, productID int64) (interface{}, error) {
+	row := q.db.QueryRow(ctx, calculateProductRating, productID)
+	var average_rating interface{}
+	err := row.Scan(&average_rating)
+	return average_rating, err
+}
+
 const createReveiw = `-- name: CreateReveiw :one
 INSERT INTO reviews (
     user_id, product_id, rating, review

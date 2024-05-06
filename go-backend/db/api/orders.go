@@ -186,7 +186,7 @@ func (server *Server) listOrders(ctx *gin.Context) {
 		return
 	}
 
-	var rsp map[string][]responseOrder
+	rsp := make(map[string][]responseOrder)
 	rsp["orders"] = make([]responseOrder, len(orders))
 	for _, order := range orders {
 		structureOrder, err := server.newOrderResponse(order, ctx)
@@ -229,7 +229,7 @@ func (server *Server) listUsersOrders(ctx *gin.Context) {
 		return
 	}
 
-	var rsp map[string][]responseOrder
+	rsp := make(map[string][]responseOrder)
 	rsp["orders"] = make([]responseOrder, len(orders))
 	for _, order := range orders {
 		structuredOrder, err := server.newOrderResponse(order, ctx)

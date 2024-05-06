@@ -28,3 +28,8 @@ WHERE id = $1 LIMIT 1;
 -- name: GetUsersReviews :many
 SELECT * FROM reviews
 WHERE user_id = $1;
+
+-- name: CalculateProductRating :one
+SELECT COALESCE(AVG(rating), 0) AS average_rating
+FROM reviews
+WHERE product_id = $1;
